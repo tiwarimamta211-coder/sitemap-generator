@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sitemap Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F2F3F0;
+    --surface: #FFFFFF;
+    --ink: #13191A;
+    --ink-soft: #565E60;
+    --muted: #8A9193;
+    --line: #DADFDC;
+    --line-soft: #E8EBE8;
+    --accent: #2A4CE0;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E7EAFC;
+    --good: #21754F;
+    --good-soft: #E4F2EA;
+    --bad: #B23B2E;
+    --bad-soft: #FBEAE6;
+    --radius: 3px;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--accent);}
+
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:48px 24px 96px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:40px;
+    padding-bottom:24px;
+    border-bottom:2px solid var(--ink);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    width:34px;height:34px;
+    flex-shrink:0;
+  }
+  h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .brand-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .top-stat{
+    text-align:right;
+    font-family:var(--mono);
+  }
+  .top-stat .num{
+    font-size:28px;
+    font-weight:600;
+    line-height:1;
+  }
+  .top-stat .lbl{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  /* ---------- Section shells ---------- */
+  section{
+    margin-bottom:40px;
+  }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+  }
+  .section-head h2{
+    font-size:14px;
+    font-weight:600;
+    margin:0;
+    text-transform:none;
+  }
+  .section-head .hint{
+    font-size:12.5px;
+    color:var(--muted);
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+
+  /* ---------- Base domain bar ---------- */
+  .domain-bar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:14px 16px;
+    flex-wrap:wrap;
+  }
+  .domain-bar label{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .domain-bar input{
+    flex:1;
+    min-width:180px;
+  }
+
+  /* ---------- Form controls ---------- */
+  input[type="text"],input[type="url"],input[type="date"],select,textarea{
+    font-family:var(--mono);
+    font-size:13.5px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    color:var(--ink);
+    width:100%;
+  }
+  input:focus,select:focus,textarea:focus,button:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+    border-color:var(--accent);
+  }
+  ::placeholder{color:var(--muted);}
+
+  button{
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    border-radius:var(--radius);
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:#fff;
+    padding:9px 16px;
+    cursor:pointer;
+    transition:transform .08s ease, opacity .12s ease;
+    white-space:nowrap;
+  }
+  button:hover{opacity:.85;}
+  button:active{transform:translateY(1px);}
+  button.secondary{
+    background:var(--surface);
+    color:var(--ink);
+    border-color:var(--line);
+  }
+  button.secondary:hover{border-color:var(--ink);opacity:1;}
+  button.accent{
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  button.danger-ghost{
+    background:transparent;
+    border-color:transparent;
+    color:var(--bad);
+    padding:4px 8px;
+    font-weight:500;
+  }
+  button.danger-ghost:hover{background:var(--bad-soft);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---------- Add-URL form ---------- */
+  .add-form{
+    display:grid;
+    grid-template-columns: 2.4fr 1fr 1.1fr 1.1fr auto;
+    gap:10px;
+    padding:16px;
+    align-items:end;
+  }
+  .field label{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .priority-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .priority-row input[type=range]{
+    width:100%;
+    accent-color:var(--accent);
+  }
+  .priority-val{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+    width:28px;
+    text-align:right;
+  }
+
+  .form-msg{
+    grid-column:1 / -1;
+    font-size:12.5px;
+    padding:8px 10px;
+    border-radius:var(--radius);
+    display:none;
+  }
+  .form-msg.show{display:block;}
+  .form-msg.err{background:var(--bad-soft);color:var(--bad);}
+  .form-msg.ok{background:var(--good-soft);color:var(--good);}
+
+  /* ---------- bulk import ---------- */
+  .bulk-toggle{
+    font-size:12.5px;
+    color:var(--accent);
+    background:none;
+    border:none;
+    padding:0;
+    font-weight:600;
+    text-decoration:underline;
+  }
+  .bulk-panel{
+    display:none;
+    padding:0 16px 16px;
+  }
+  .bulk-panel.open{display:block;}
+  .bulk-panel textarea{
+    min-height:110px;
+    resize:vertical;
+    margin-bottom:10px;
+  }
+  .bulk-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .bulk-actions .note{font-size:12px;color:var(--muted);}
+
+  /* ---------- Table ---------- */
+  .table-scroll{overflow-x:auto;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+    padding:10px 14px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:9px 14px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FAFAF8;}
+  td.url-cell{
+    font-family:var(--mono);
+    font-size:12.5px;
+    max-width:340px;
+  }
+  td.url-cell .full{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  td.url-cell.invalid .full{color:var(--bad);}
+  .row-input{
+    width:100%;
+    padding:5px 6px;
+    font-size:12.5px;
+  }
+  .row-select{
+    width:100%;
+    padding:5px 6px;
+    font-size:12px;
+  }
+  td.actions-cell{text-align:right;}
+  .empty-row td{
+    text-align:center;
+    padding:44px 20px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .empty-row .big{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+    font-weight:500;
+  }
+
+  .pri-chip{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:2px 6px;
+    border-radius:2px;
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+
+  /* ---------- Output panel ---------- */
+  .output-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--bg);
+    padding:3px;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-weight:600;
+    font-size:12.5px;
+    padding:6px 14px;
+    border-radius:2px;
+  }
+  .tab-btn.active{
+    background:var(--surface);
+    color:var(--ink);
+    box-shadow:0 1px 2px rgba(0,0,0,.06);
+  }
+  .output-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .output-body{
+    max-height:420px;
+    overflow:auto;
+    background:#101314;
+  }
+  pre{
+    margin:0;
+    padding:18px 20px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.65;
+    color:#D9E0DD;
+    white-space:pre-wrap;
+    word-break:break-all;
+  }
+  .tag{color:#7FA8FF;}
+  .attr{color:#9BD69B;}
+  .val{color:#E8C07D;}
+
+  .copy-flash{
+    font-size:12px;
+    color:var(--good);
+    display:none;
+    align-items:center;
+  }
+  .copy-flash.show{display:inline-flex;}
+
+  footer.info{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.7;
+  }
+  footer.info strong{color:var(--ink-soft);}
+
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px){
+    .wrap{padding:28px 16px 64px;}
+    header.top{flex-direction:column;align-items:flex-start;gap:14px;}
+    .top-stat{text-align:left;}
+    .add-form{grid-template-columns:1fr 1fr;}
+    .add-form .field.url-field{grid-column:1 / -1;}
+    .add-form .add-btn{grid-column:1 / -1;}
+
+    thead{display:none;}
+    table, tbody, tr, td{display:block;width:100%;}
+    tbody tr{
+      border:1px solid var(--line-soft);
+      border-radius:var(--radius);
+      margin:0 14px 12px;
+      padding:10px 12px;
+      background:var(--surface);
+    }
+    .table-scroll{overflow:visible;}
+    tbody td{
+      border-bottom:none;
+      padding:6px 0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    tbody td::before{
+      content:attr(data-label);
+      font-size:11px;
+      color:var(--muted);
+      font-weight:600;
+      flex-shrink:0;
+      width:78px;
+    }
+    td.url-cell{max-width:none;}
+    td.url-cell .full{max-width:100%;}
+    td.actions-cell{justify-content:flex-end;}
+    td.actions-cell::before{display:none;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="32" height="32" rx="3" stroke="#13191A" stroke-width="2"/>
+        <circle cx="9" cy="9" r="2.4" fill="#2A4CE0"/>
+        <circle cx="25" cy="9" r="2.4" fill="#13191A"/>
+        <circle cx="9" cy="25" r="2.4" fill="#13191A"/>
+        <circle cx="25" cy="25" r="2.4" fill="#13191A"/>
+        <path d="M9 9L25 9M9 9L9 25M25 9L25 25M9 25L25 25M9 9L25 25M25 9L9 25" stroke="#C7CDCA" stroke-width="1"/>
+      </svg>
+      <div>
+        <h1>Sitemap Generator</h1>
+        <div class="brand-sub">Build, edit and export an XML or HTML sitemap — entirely in your browser</div>
+      </div>
+    </div>
+    <div class="top-stat">
+      <div class="num" id="statCount">0</div>
+      <div class="lbl">URLs added</div>
+    </div>
+  </header>
+
+  <!-- Base domain -->
+  <section aria-label="Base domain">
+    <div class="card">
+      <div class="domain-bar">
+        <label for="baseDomain">Base domain</label>
+        <input type="text" id="baseDomain" placeholder="https://www.example.com" autocomplete="off" spellcheck="false">
+        <span class="hint" style="font-size:12px;color:var(--muted);">used to complete relative paths like <code>/about</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add URL -->
+  <section aria-label="Add URL">
+    <div class="section-head">
+      <h2>Add a URL</h2>
+      <button type="button" class="bulk-toggle" id="bulkToggle">Bulk import ›</button>
+    </div>
+    <div class="card">
+      <div class="add-form">
+        <div class="field url-field">
+          <label for="urlInput">Page URL</label>
+          <input type="text" id="urlInput" placeholder="/pricing or https://example.com/pricing" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="priorityInput">Priority</label>
+          <div class="priority-row">
+            <input type="range" id="priorityInput" min="0" max="1" step="0.1" value="0.5">
+            <span class="priority-val" id="priorityVal">0.5</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="freqInput">Change frequency</label>
+          <select id="freqInput">
+            <option value="always">Always</option>
+            <option value="hourly">Hourly</option>
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="never">Never</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lastmodInput">Last modified</label>
+          <input type="date" id="lastmodInput">
+        </div>
+        <div class="field add-btn">
+          <label class="sr-only">Add</label>
+          <button type="button" class="accent" id="addBtn" style="width:100%;">Add URL</button>
+        </div>
+        <div class="form-msg" id="formMsg"></div>
+      </div>
+
+      <div class="bulk-panel" id="bulkPanel">
+        <div style="height:1px;background:var(--line);margin-bottom:16px;"></div>
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;">Paste one URL per line — defaults above are applied to all</label>
+        <textarea id="bulkText" placeholder="/&#10;/about&#10;/blog/my-first-post&#10;https://example.com/contact"></textarea>
+        <div class="bulk-actions">
+          <button type="button" class="secondary" id="bulkAddBtn">Add all lines</button>
+          <span class="note" id="bulkNote"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <section aria-label="URL list">
+    <div class="section-head">
+      <h2>URLs (<span id="tableCount">0</span>)</h2>
+      <span class="hint" id="dupHint"></span>
+    </div>
+    <div class="card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:38%;">URL</th>
+              <th style="width:14%;">Priority</th>
+              <th style="width:16%;">Frequency</th>
+              <th style="width:16%;">Last modified</th>
+              <th style="width:16%;text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="empty-row">
+              <td colspan="5">
+                <div class="big">No URLs yet</div>
+                Add one above, or bulk-import a list of paths.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Output -->
+  <section aria-label="Generated sitemap">
+    <div class="section-head">
+      <h2>Generated sitemap</h2>
+      <span class="hint" id="sizeHint">0 URLs · 0 KB</span>
+    </div>
+    <div class="card">
+      <div class="output-head">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab-btn active" id="tabXml" role="tab">sitemap.xml</button>
+          <button type="button" class="tab-btn" id="tabHtml" role="tab">sitemap.html</button>
+        </div>
+        <div class="output-actions">
+          <span class="copy-flash" id="copyFlash">Copied ✓</span>
+          <button type="button" class="secondary" id="copyBtn">Copy</button>
+          <button type="button" id="downloadBtn">Download</button>
+        </div>
+      </div>
+      <div class="output-body">
+        <pre id="outputPre">&lt;!-- Add URLs above to generate a sitemap --&gt;</pre>
+      </div>
+    </div>
+    <footer class="info">
+      <strong>Note:</strong> sitemaps follow the standard <code>sitemaps.org</code> protocol (max 50,000 URLs / 50MB per file — this tool warns you well before that limit). All data stays in your browser; nothing is uploaded anywhere, and the list resets if you reload the page.
+    </footer>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /** ---------- State ---------- **/
+  var entries = [];
+  var idCounter = 1;
+  var activeTab = 'xml';
+
+  /** ---------- Elements ---------- **/
+  var baseDomainEl = document.getElementById('baseDomain');
+  var urlInput = document.getElementById('urlInput');
+  var priorityInput = document.getElementById('priorityInput');
+  var priorityVal = document.getElementById('priorityVal');
+  var freqInput = document.getElementById('freqInput');
+  var lastmodInput = document.getElementById('lastmodInput');
+  var addBtn = document.getElementById('addBtn');
+  var formMsg = document.getElementById('formMsg');
+
+  var bulkToggle = document.getElementById('bulkToggle');
+  var bulkPanel = document.getElementById('bulkPanel');
+  var bulkText = document.getElementById('bulkText');
+  var bulkAddBtn = document.getElementById('bulkAddBtn');
+  var bulkNote = document.getElementById('bulkNote');
+
+  var tableBody = document.getElementById('tableBody');
+  var tableCount = document.getElementById('tableCount');
+  var statCount = document.getElementById('statCount');
+  var dupHint = document.getElementById('dupHint');
+
+  var tabXml = document.getElementById('tabXml');
+  var tabHtml = document.getElementById('tabHtml');
+  var outputPre = document.getElementById('outputPre');
+  var sizeHint = document.getElementById('sizeHint');
+  var copyBtn = document.getElementById('copyBtn');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var copyFlash = document.getElementById('copyFlash');
+
+  /** ---------- Init ---------- **/
+  lastmodInput.value = todayISO();
+
+  function todayISO(){
+    var d = new Date();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var day = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  /** ---------- URL resolution & validation ---------- **/
+  function resolveUrl(raw){
+    raw = (raw || '').trim();
+    if(!raw) return {ok:false, value:''};
+    var base = (baseDomainEl.value || '').trim();
+
+    // Already absolute
+    if(/^https?:\/\//i.test(raw)){
+      try{ new URL(raw); return {ok:true, value: raw}; }
+      catch(e){ return {ok:false, value: raw}; }
+    }
+
+    // Relative path — needs a base domain
+    if(base){
+      var b = base.replace(/\/+$/,'');
+      if(!/^https?:\/\//i.test(b)) b = 'https://' + b;
+      var p = raw.startsWith('/') ? raw : '/' + raw;
+      var full = b + p;
+      try{ new URL(full); return {ok:true, value: full}; }
+      catch(e){ return {ok:false, value: full}; }
+    }
+
+    // No base domain and not absolute
+    try{ new URL(raw); return {ok:true, value: raw}; }
+    catch(e){ return {ok:false, value: raw, needsBase:true}; }
+  }
+
+  function escapeXml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  }
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /** ---------- Messaging ---------- **/
+  function showMsg(text, type){
+    formMsg.textContent = text;
+    formMsg.className = 'form-msg show ' + type;
+    clearTimeout(showMsg._t);
+    showMsg._t = setTimeout(function(){
+      formMsg.classList.remove('show');
+    }, 3200);
+  }
+
+  /** ---------- Add single ---------- **/
+  addBtn.addEventListener('click', function(){
+    var res = resolveUrl(urlInput.value);
+    if(!res.value){
+      showMsg('Enter a URL first.', 'err');
+      return;
+    }
+    if(!res.ok){
+      showMsg(res.needsBase ? 'That looks like a relative path — set a base domain above first.' : 'That doesn\u2019t look like a valid URL.', 'err');
+      return;
+    }
+    if(entries.some(function(e){ return e.url === res.value; })){
+      showMsg('That URL is already in the list.', 'err');
+      return;
+    }
+    entries.push({
+      id: idCounter++,
+      url: res.value,
+      priority: parseFloat(priorityInput.value),
+      freq: freqInput.value,
+      lastmod: lastmodInput.value || todayISO()
+    });
+    urlInput.value = '';
+    urlInput.focus();
+    showMsg('Added.', 'ok');
+    render();
+  });
+
+  urlInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); addBtn.click(); }
+  });
+
+  priorityInput.addEventListener('input', function(){
+    priorityVal.textContent = parseFloat(priorityInput.value).toFixed(1);
+  });
+
+  /** ---------- Bulk import ---------- **/
+  bulkToggle.addEventListener('click', function(){
+    var open = bulkPanel.classList.toggle('open');
+    bulkToggle.textContent = open ? 'Bulk import ⌃' : 'Bulk import ›';
+    if(open) bulkText.focus();
+  });
+
+  bulkAddBtn.addEventListener('click', function(){
+    var lines = bulkText.value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    if(!lines.length){
+      bulkNote.textContent = 'Paste at least one URL.';
+      bulkNote.style.color = 'var(--bad)';
+      return;
+    }
+    var added = 0, skipped = 0, invalid = 0;
+    lines.forEach(function(line){
+      var res = resolveUrl(line);
+      if(!res.ok){ invalid++; return; }
+      if(entries.some(function(e){ return e.url === res.value; })){ skipped++; return; }
+      entries.push({
+        id: idCounter++,
+        url: res.value,
+        priority: parseFloat(priorityInput.value),
+        freq: freqInput.value,
+        lastmod: lastmodInput.value || todayISO()
+      });
+      added++;
+    });
+    var parts = [added + ' added'];
+    if(skipped) parts.push(skipped + ' duplicate' + (skipped>1?'s':'') + ' skipped');
+    if(invalid) parts.push(invalid + ' invalid skipped');
+    bulkNote.textContent = parts.join(' · ');
+    bulkNote.style.color = 'var(--ink-soft)';
+    bulkText.value = '';
+    render();
+  });
+
+  /** ---------- Table render ---------- **/
+  function render(){
+    tableCount.textContent = entries.length;
+    statCount.textContent = entries.length;
+
+    if(!entries.length){
+      tableBody.innerHTML = '<tr class="empty-row"><td colspan="5"><div class="big">No URLs yet</div>Add one above, or bulk-import a list of paths.</td></tr>';
+    } else {
+      tableBody.innerHTML = entries.map(rowHtml).join('');
+    }
+
+    // duplicate hint (shouldn't normally trigger, dedupe happens on add)
+    dupHint.textContent = '';
+
+    bindRowEvents();
+    renderOutput();
+  }
+
+  function rowHtml(e){
+    return '' +
+      '<tr data-id="'+e.id+'">' +
+        '<td class="url-cell" data-label="URL"><span class="full" title="'+escapeHtml(e.url)+'">'+escapeHtml(e.url)+'</span></td>' +
+        '<td data-label="Priority">' +
+          '<select class="row-select pri-select" data-id="'+e.id+'">' +
+            [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0].map(function(p){
+              return '<option value="'+p+'"'+(Math.abs(p-e.priority)<0.001?' selected':'')+'>'+p.toFixed(1)+'</option>';
+            }).join('') +
+          '</select>' +
+        '</td>' +
+        '<td data-label="Frequency">' +
+          '<select class="row-select freq-select" data-id="'+e.id+'">' +
+            ['always','hourly','daily','weekly','monthly','yearly','never'].map(function(f){
+              return '<option value="'+f+'"'+(f===e.freq?' selected':'')+'>'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';
+            }).join('') +
+          '</select>' +
+        '</td>' +
+        '<td data-label="Last modified"><input type="date" class="row-input lastmod-input" data-id="'+e.id+'" value="'+e.lastmod+'"></td>' +
+        '<td class="actions-cell" data-label=""><button type="button" class="danger-ghost remove-btn" data-id="'+e.id+'">Remove</button></td>' +
+      '</tr>';
+  }
+
+  function bindRowEvents(){
+    Array.prototype.forEach.call(document.querySelectorAll('.remove-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = parseInt(btn.getAttribute('data-id'), 10);
+        entries = entries.filter(function(e){ return e.id !== id; });
+        render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.pri-select'), function(sel){
+      sel.addEventListener('change', function(){
+        var id = parseInt(sel.getAttribute('data-id'), 10);
+        var e = entries.find(function(x){ return x.id === id; });
+        if(e){ e.priority = parseFloat(sel.value); renderOutput(); }
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.freq-select'), function(sel){
+      sel.addEventListener('change', function(){
+        var id = parseInt(sel.getAttribute('data-id'), 10);
+        var e = entries.find(function(x){ return x.id === id; });
+        if(e){ e.freq = sel.value; renderOutput(); }
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.lastmod-input'), function(inp){
+      inp.addEventListener('change', function(){
+        var id = parseInt(inp.getAttribute('data-id'), 10);
+        var e = entries.find(function(x){ return x.id === id; });
+        if(e){ e.lastmod = inp.value || todayISO(); renderOutput(); }
+      });
+    });
+  }
+
+  /** ---------- Output generation ---------- **/
+  function generateXml(){
+    if(!entries.length) return '<!-- Add URLs above to generate a sitemap -->';
+    var lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+    entries.forEach(function(e){
+      lines.push('  <url>');
+      lines.push('    <loc>'+escapeXml(e.url)+'</loc>');
+      lines.push('    <lastmod>'+e.lastmod+'</lastmod>');
+      lines.push('    <changefreq>'+e.freq+'</changefreq>');
+      lines.push('    <priority>'+e.priority.toFixed(1)+'</priority>');
+      lines.push('  </url>');
+    });
+    lines.push('</urlset>');
+    return lines.join('\n');
+  }
+
+  function generateHtmlSitemap(){
+    if(!entries.length) return '<!-- Add URLs above to generate a sitemap -->';
+    var lines = ['<!DOCTYPE html>', '<html lang="en">', '<head>',
+      '  <meta charset="UTF-8">', '  <title>Sitemap</title>', '</head>', '<body>',
+      '  <h1>Sitemap</h1>', '  <ul>'];
+    entries.forEach(function(e){
+      lines.push('    <li><a href="'+escapeXml(e.url)+'">'+escapeHtml(e.url)+'</a></li>');
+    });
+    lines.push('  </ul>', '</body>', '</html>');
+    return lines.join('\n');
+  }
+
+  function highlight(code){
+    return escapeHtml(code)
+      .replace(/(&lt;\/?)([a-zA-Z0-9:]+)/g, '$1<span class="tag">$2</span>')
+      .replace(/([a-zA-Z-]+)(=)(&quot;[^&]*&quot;)/g, '<span class="attr">$1</span>$2<span class="val">$3</span>');
+  }
+
+  function renderOutput(){
+    var code = activeTab === 'xml' ? generateXml() : generateHtmlSitemap();
+    outputPre.innerHTML = highlight(code);
+    var bytes = new Blob([code]).size;
+    var kb = (bytes/1024).toFixed(bytes < 10240 ? 1 : 0);
+    sizeHint.textContent = entries.length + ' URL' + (entries.length===1?'':'s') + ' · ' + kb + ' KB';
+    if(entries.length > 45000){
+      sizeHint.textContent += '  ⚠ approaching the 50,000 URL sitemap limit — split into multiple files';
+    }
+  }
+
+  tabXml.addEventListener('click', function(){
+    activeTab = 'xml';
+    tabXml.classList.add('active');
+    tabHtml.classList.remove('active');
+    renderOutput();
+  });
+  tabHtml.addEventListener('click', function(){
+    activeTab = 'html';
+    tabHtml.classList.add('active');
+    tabXml.classList.remove('active');
+    renderOutput();
+  });
+
+  /** ---------- Copy / Download ---------- **/
+  copyBtn.addEventListener('click', function(){
+    var code = activeTab === 'xml' ? generateXml() : generateHtmlSitemap();
+    var done = function(){
+      copyFlash.classList.add('show');
+      setTimeout(function(){ copyFlash.classList.remove('show'); }, 1800);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(done).catch(function(){ fallbackCopy(code, done); });
+    } else {
+      fallbackCopy(code, done);
+    }
+  });
+
+  function fallbackCopy(text, cb){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); cb(); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  downloadBtn.addEventListener('click', function(){
+    var code = activeTab === 'xml' ? generateXml() : generateHtmlSitemap();
+    var filename = activeTab === 'xml' ? 'sitemap.xml' : 'sitemap.html';
+    var mime = activeTab === 'xml' ? 'application/xml' : 'text/html';
+    var blob = new Blob([code], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  /** ---------- First render ---------- **/
+  render();
+})();
+</script>
+
+</body>
+</html>
